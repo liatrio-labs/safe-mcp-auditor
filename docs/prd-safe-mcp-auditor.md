@@ -18,6 +18,101 @@ Where:
 - `<target-name>` is derived automatically (with override).
 - `<input-hash>` is a short, stable fingerprint of the analyzed input to avoid overwriting and to support comparisons over time.
 
+## Architecture diagrams
+
+### System overview
+
+```mermaid
+flowchart TD
+    Dir[Directory Input<br/>MCP Source Tree] --> Ingest[Ingest & Normalize]
+    Repomix[Repomix Input<br/>Packed Repo XML] --> Ingest
+
+    Ingest --> Index[Index Files & Entry Points]
+    Index --> CrewAI[CrewAI Audit Pipeline]
+
+    SAFE[SAFE-MCP Knowledge<br/>Techniques + Mitigations] -. retrieval .-> CrewAI
+
+    CrewAI --> ReportJSON[JSON Report<br/>Source of Truth]
+    CrewAI --> ReportMD[Markdown Report<br/>Rendered View]
+
+    ReportJSON --> ReportsDir[(reports/)]
+    ReportMD --> ReportsDir
+
+    classDef input fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    classDef process fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef knowledge fill:#f5f5f5,stroke:#424242,stroke-width:2px
+    classDef output fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+
+    class Dir,Repomix input
+    class Ingest,Index,CrewAI process
+    class SAFE knowledge
+    class ReportJSON,ReportMD,ReportsDir output
+```
+
+### Audit pipeline (internal stages)
+
+```mermaid
+flowchart LR
+    A[Ingest & Normalize] --> B[Index Repo]
+    B --> C[Extract Inventory]
+    C --> D[Detect Risk Signals]
+    D --> E[Map to SAFE Techniques]
+    E --> F[Consolidate Findings]
+    F --> G[Enrich w/ SAFE Mitigations<br/>and Detection Ideas]
+    G --> H[Write JSON]
+    H --> I[Render Markdown]
+
+    C --> U[Unknowns Bucket]
+    D --> U
+    E --> U
+    F --> U
+    U --> Gate{Unknowns Present?}
+    Gate -->|Yes| NR[Status: needs_review<br/>Non-zero exit]
+    Gate -->|No| OK[Status: pass<br/>Exit 0]
+
+    classDef stage fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef output fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px
+    classDef decision fill:#fff3e0,stroke:#ef6c00,stroke-width:2px
+    classDef warn fill:#ffcdd2,stroke:#c62828,stroke-width:2px
+
+    class A,B,C,D,E,F,G,H,I stage
+    class Gate decision
+    class NR warn
+    class OK output
+    class U stage
+```
+
+### Run sequence (CLI → audit → reports)
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant User as User / CI
+    participant CLI as safe-mcp-auditor CLI
+    participant Ingest as Ingest & Index
+    participant Crew as CrewAI Crew
+    participant KB as SAFE-MCP Knowledge
+    participant FS as reports/ directory
+
+    User->>CLI: Invoke audit (path or repomix)
+    CLI->>Ingest: Load input + build file index
+    Ingest-->>CLI: Normalized repo index
+
+    CLI->>Crew: Kickoff audit pipeline
+    rect rgb(255, 243, 224)
+        Crew->>Crew: Extract inventory
+        Crew->>Crew: Detect risk signals
+        Crew->>KB: Retrieve SAFE-T/SAFE-M guidance
+        KB-->>Crew: Relevant excerpts
+        Crew->>Crew: Consolidate findings + unknowns
+    end
+
+    Crew-->>CLI: Structured results (JSON model)
+    CLI->>FS: Write JSON report
+    CLI->>FS: Render + write Markdown report
+    CLI-->>User: Exit code (0 pass, non-zero needs_review)
+```
+
 ## Background
 
 MCP servers can expose powerful tools (filesystem, network, credentials, package managers, CI/CD systems). SAFE-MCP provides a MITRE ATT&CK-style catalog of tactics, techniques, and mitigations tailored to MCP ecosystems.
@@ -71,6 +166,42 @@ Primary persona: engineers who need actionable fixes.
 - Stable finding IDs.
 - Unknowns are a non-passing gate.
 - Engineer-first report ordering.
+
+## Technology choices
+
+### Python dependency management (uv)
+
+This project uses `uv` for all Python dependency and environment management.
+
+- Dependencies are declared in `pyproject.toml`.
+- The project uses a committed `uv.lock` to ensure reproducible installs.
+- `uv` manages the project virtual environment under `.venv`.
+- Developer workflows should prefer `uv run ...` to guarantee commands run in a locked environment (keeps `pyproject.toml`, `uv.lock`, and `.venv` in sync).
+
+Common workflows (illustrative):
+
+- Initialize project: `uv init`
+- Add/remove dependencies: `uv add ...`, `uv remove ...`
+- Update lockfile: `uv lock`
+- Sync environment from lockfile: `uv sync`
+
+References:
+
+- `https://docs.astral.sh/uv/`
+- `https://docs.astral.sh/uv/guides/projects/`
+
+### CLI framework (Typer)
+
+The auditor CLI is implemented with Typer to provide strong UX defaults and type-driven argument validation.
+
+- Command groups and subcommands (e.g., `audit`, `version`, `schema`) map naturally to Typer apps.
+- Automatic `--help` and optional shell completion improve discoverability.
+- Type hints (e.g., `Path`, `Enum`) provide built-in validation and better error messages.
+
+References:
+
+- `https://typer.tiangolo.com/`
+- `https://typer.tiangolo.com/tutorial/`
 
 ## Inputs
 
@@ -357,24 +488,38 @@ At minimum:
 
 ## CLI requirements
 
+This application provides a Typer-based CLI.
+
+- When installed as a package, users run `safe-mcp-auditor ...` directly.
+- During local development, prefer `uv run safe-mcp-auditor ...` to ensure a consistent, locked environment.
+
 ### Example commands
 
 - Directory:
 
   ```bash
   safe-mcp-auditor audit --path ./path/to/mcp
+
+  # Dev workflow
+  uv run safe-mcp-auditor audit --path ./path/to/mcp
   ```
 
 - Repomix:
 
   ```bash
   safe-mcp-auditor audit --repomix ./path/to/repomix.xml
+
+  # Dev workflow
+  uv run safe-mcp-auditor audit --repomix ./path/to/repomix.xml
   ```
 
 - Override target name:
 
   ```bash
   safe-mcp-auditor audit --path ./repo --target-name github-mcp-server
+
+  # Dev workflow
+  uv run safe-mcp-auditor audit --path ./repo --target-name github-mcp-server
   ```
 
 ### CLI outputs
@@ -404,6 +549,8 @@ At minimum:
 - The Markdown report includes evidence pointers and excerpts.
 - Unknowns cause non-passing status and non-zero exit.
 - Findings include SAFE technique mappings and recommended SAFE mitigations.
+- The project uses `uv` for dependency management and includes a committed `uv.lock`.
+- The CLI is implemented with Typer and provides `--help` for all commands.
 
 ## Future enhancements
 
