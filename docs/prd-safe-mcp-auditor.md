@@ -347,10 +347,125 @@ Recommended roles:
 
 ### SAFE-MCP Knowledge usage
 
-- SAFE-MCP framework content is embedded as crew-level knowledge.
+SAFE-MCP is incorporated into the auditor as CrewAI Knowledge so the crew can reliably retrieve canonical technique and mitigation definitions during mapping and enrichment.
+
+Key design intent: `docs/references/repomix-output-SAFE-MCP-safe-mcp.xml` is excellent as an offline reference artifact, but it is not the preferred shape for Knowledge retrieval (it is a single, very large file and tends to produce noisier/less targeted retrieval).
+
+#### SAFE-MCP Knowledge corpus (curated)
+
+The Knowledge corpus must be built from SAFE-MCP source material as many small, topic-scoped documents (one technique/mitigation per file), rather than a monolithic packed file.
+
+Minimum required sources (from SAFE-MCP repo):
+
+- Framework overview:
+  - `README.md`
+  - `MITIGATIONS.md`
+- Techniques:
+  - `techniques/**/README.md`
+- Mitigations:
+  - `mitigations/**/README.md`
+
+Optional sources (recommended for better engineering guidance):
+
+- Detection rules (to support the report’s detection recommendations):
+  - `techniques/**/detection-rule*.yml` and `techniques/**/detection-rule*.yaml`
+- Technique/mitigation templates (to keep schema alignment with upstream conventions):
+  - `techniques/TEMPLATE.md`, `techniques/TEMPLATE-CHECKLIST.md`
+  - `mitigations/TEMPLATE.md`, `mitigations/TEMPLATE-CHECKLIST.md`
+
+Explicit exclusions (not useful for Knowledge and adds noise):
+
+- `**/test-logs.json`, `**/test_detection_rule.py`, `**/validate.sh`
+- `techniques/**/examples/**` (code examples can be very verbose; include only if we later find it materially improves retrieval)
+- Legal/community files (`LICENSE*`, `CODE_OF_CONDUCT.md`, `CONTRIBUTING.md`, etc.)
+
+#### Knowledge pack format (recommended)
+
+To improve retrieval precision, build a normalized “knowledge pack” on disk where each SAFE-MCP entity becomes one file:
+
+- Techniques: `SAFE-T####.md` (e.g., `SAFE-T1102.md`)
+- Mitigations: `SAFE-M-#.md` (e.g., `SAFE-M-1.md`)
+
+Each file should start with a short, consistent header block (frontmatter or a fixed markdown section) capturing:
+
+- `id` (SAFE-T/SAFE-M)
+- `title`
+- `tactic` (for techniques)
+- `severity` (for techniques)
+- `category` / `effectiveness` / `complexity` (for mitigations)
+- `source_path` (original SAFE-MCP path)
+- `safe_mcp_reference` (tag/commit)
+
+Follow the header with the original markdown body (or a lightly normalized version that preserves headings and links).
+
+Also include a small index file to support broad lookups:
+
+- `SAFE-MCP-INDEX.md` listing all techniques and mitigations (IDs + titles) and the pinned `safe_mcp_reference`.
+
+#### Source of truth and pinning
+
+The auditor must pin SAFE-MCP content to a specific tag or commit for reproducibility.
+
+- Source of truth: a git ref (`safe_mcp_reference`) stored in application configuration and recorded in every report as `metadata.safe_mcp_reference`.
+- SAFE-MCP sources are fetched from GitHub at the pinned ref and transformed into the curated knowledge pack format.
+
+Recommended fetch mechanism:
+
+- Use the GitHub CLI (`gh`) to fetch a specific commit/tag into a local cache (e.g., `data/safe-mcp-src/<safe_mcp_reference>/`).
+- The app may optionally support a Python GitHub client in the future, but `gh` is sufficient for the MVP.
+
+`docs/references/repomix-output-SAFE-MCP-safe-mcp.xml` remains a development reference artifact, not a required runtime source.
+
+#### Knowledge index lifecycle (build vs run)
+
+SAFE-MCP Knowledge is treated as a build artifact with its own lifecycle. Building/updating the SAFE-MCP knowledge index is intentionally separated from running an audit.
+
+Lifecycle phases:
+
+1. Fetch sources
+   - Fetch SAFE-MCP repo at `safe_mcp_reference` into `data/safe-mcp-src/<ref>/`.
+2. Build knowledge pack
+   - Apply the curated include/exclude rules and write normalized, per-entity files into `knowledge/safe-mcp/<ref>/`.
+   - Write a build manifest (e.g., `knowledge/safe-mcp/manifest.json`) including: `safe_mcp_reference`, embedder config, chunk settings, and a content hash over the knowledge pack.
+3. Build embeddings index
+   - Initialize CrewAI Knowledge sources pointing at the knowledge pack files and embed them into the CrewAI knowledge store.
+4. Verify
+   - Run a small retrieval smoke test (e.g., query `SAFE-T1102` and confirm expected title/sections are retrieved) to catch broken builds.
+
+#### CLI commands for SAFE-MCP index management
+
+Add a dedicated command group for SAFE-MCP knowledge lifecycle operations:
+
+- `safe-mcp-auditor safe-mcp status` (shows configured ref, whether pack/index exist, and current manifest)
+- `safe-mcp-auditor safe-mcp fetch --ref <tag|sha>` (download SAFE-MCP sources via `gh`)
+- `safe-mcp-auditor safe-mcp build-pack --ref <tag|sha>` (generate `knowledge/safe-mcp/<ref>/` + manifest)
+- `safe-mcp-auditor safe-mcp build-index --ref <tag|sha> [--force]` (embed into CrewAI storage)
+- `safe-mcp-auditor safe-mcp verify --ref <tag|sha>` (retrieval smoke tests)
+
+#### CrewAI Knowledge storage and reset mechanics
+
+- SAFE-MCP knowledge sources are attached at crew level (`Crew(..., knowledge_sources=[...])`) so all roles share the same canonical framework context.
+- Store the vector DB inside the project (e.g., set `CREWAI_STORAGE_DIR=./.crewai_storage`) to support repeat runs and easy CI cleanup.
+- Rebuild triggers:
+  - `safe_mcp_reference` changed
+  - knowledge pack content hash changed
+  - embedder config changed (common cause of embedding-dimension mismatch)
+  - chunking parameters changed
+- When a rebuild trigger occurs, the app must clear and rebuild the knowledge store for SAFE-MCP.
+  - Preferred: call `crew.reset_memories(command_type='knowledge')` before re-embedding.
+  - Operational fallback: `crewai reset-memories --knowledge`.
+
+#### Audit runtime behavior (hard-fail)
+
+The `audit` command must not implicitly rebuild SAFE-MCP Knowledge.
+
+- If the SAFE-MCP index is missing or stale relative to the configured `safe_mcp_reference` and manifest, `audit` must hard-fail with a clear error and instructions to run `safe-mcp-auditor safe-mcp build-index --ref <ref>`.
+
+#### Target MCP code handling
+
 - Target MCP code is not persisted in a long-lived vector store by default.
   - Preferred: direct read/search + structured extraction.
-  - Optional future enhancement: ephemeral, per-run indexing for large repos.
+  - Optional future enhancement: ephemeral, per-run indexing for very large repos.
 
 ### Reliability mechanisms
 
