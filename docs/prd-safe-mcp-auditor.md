@@ -644,17 +644,67 @@ This application provides a Typer-based CLI.
 
 ## Testing requirements
 
-### Functional
+This project follows a strict TDD workflow and requires fully offline test execution in CI.
 
-- Directory mode produces valid JSON and Markdown.
-- Repomix mode produces the same schema.
-- Unknowns force `status = needs_review` and non-zero exit.
-- Finding IDs remain stable across repeated runs on identical inputs.
+### Testing strategy (TDD-first)
 
-### Regression
+Core principle: keep deterministic logic outside the LLM loop. Use CrewAI features like `output_pydantic` and function-based guardrails to make behavior testable and repeatable.
 
-- Maintain a small set of known MCP samples.
-- Use CrewAI testing to detect drift in outputs.
+References:
+
+- CrewAI testing: `https://docs.crewai.com/en/concepts/testing`
+- Task structured outputs and guardrails: `https://docs.crewai.com/en/concepts/tasks`
+- Knowledge storage, events, and reset: `https://docs.crewai.com/en/concepts/knowledge`
+
+### Offline-only constraint
+
+All CI tests must run without network access. Any integration points that normally use network must be mocked:
+
+- `gh` calls used by `safe-mcp-auditor safe-mcp fetch` must be mocked (subprocess stub or similar).
+- Any LLM calls (including any judge/evaluator LLM) must be mocked or replaced with deterministic fixtures.
+
+### Unit tests (no CrewAI, no LLM)
+
+These are the primary red/green tests and must be fully deterministic:
+
+- Directory indexing and Repomix parsing.
+- SAFE-MCP knowledge pack generation (curation rules, file generation, manifest hashing).
+- Input fingerprinting and stable finding ID hashing.
+- JSON report model validation (Pydantic/schema) and Markdown rendering as a pure function of JSON.
+- Index staleness detection logic (missing index, ref mismatch, embedder mismatch, hash mismatch).
+
+### CLI tests (Typer)
+
+Test the CLI contract and exit codes using Typer/Click’s testing utilities:
+
+- `safe-mcp-auditor safe-mcp status|fetch|build-pack|build-index|verify`.
+- `safe-mcp-auditor audit ...` hard-fails when SAFE-MCP index is missing or stale.
+
+All CLI tests must be offline and use mocked subprocess/file fixtures.
+
+### CrewAI integration tests (no network)
+
+Verify the crew wiring and task contracts without relying on a real model:
+
+- Inject a fake LLM with fixed prompt→response fixtures.
+- Use `Task(output_pydantic=...)` / `Task(output_json=...)` to assert structured outputs.
+- Use function-based guardrails to enforce schema, stable IDs, ordering, and required fields.
+
+### Knowledge/retrieval tests (no network)
+
+Test SAFE-MCP retrieval behavior using a small local fixture knowledge pack:
+
+- Set `CREWAI_STORAGE_DIR` to a per-test temp directory.
+- Build the knowledge store from fixture files.
+- Assert that retrieval returns expected chunks for known queries (e.g., `SAFE-T1102`).
+- Optionally attach an event listener to assert that knowledge retrieval events occurred and capture retrieved chunk counts.
+
+### Optional quality evaluation (non-gating)
+
+CrewAI’s `crewai test` runs an LLM-judged scoring loop and is not deterministic enough for strict TDD gating.
+
+- If used, it should run only as a non-blocking, manual, or nightly quality check.
+- It must not be required for PR correctness in a fully offline CI environment.
 
 ## Acceptance criteria (MVP)
 
