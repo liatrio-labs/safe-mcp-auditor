@@ -134,7 +134,7 @@ class WhyItMatters(BaseModel):
 
 
 class Finding(BaseModel):
-    id: str
+    id: str | None = None
     title: str
     severity: Severity
     confidence: Confidence
@@ -146,7 +146,7 @@ class Finding(BaseModel):
 
 
 class Unknown(BaseModel):
-    id: str
+    id: str | None = None
     question: str
     why_it_matters: str
     how_to_verify: str

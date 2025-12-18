@@ -1,0 +1,97 @@
+{
+  "schema_version": "1.0.0",
+  "status": "needs_review",
+  "metadata": {
+    "target_name": "example-target",
+    "input_type": "directory",
+    "input_path": "./example",
+    "input_hash": "deadbeef",
+    "analyzed_at": "2025-01-01T00:00:00Z",
+    "app_version": "0.1.0",
+    "safe_mcp_reference": "SAFE-MCP@dev",
+    "safe_mcp_manifest_path": "knowledge/safe-mcp/manifest.json",
+    "safe_mcp_knowledge_pack_hash": "abc123",
+    "models": {
+      "llm": { "provider": "offline", "model": "stub", "temperature": 0 },
+      "embedder": { "provider": "offline", "model": "stub" }
+    },
+    "run_id": "00000000-0000-0000-0000-000000000000",
+    "scope": {
+      "included_paths": ["."],
+      "excluded_paths": [".venv", "node_modules", "reports"]
+    }
+  },
+  "inventory": {
+    "languages": ["python"],
+    "entrypoints": [],
+    "mcp_transport": "unknown",
+    "auth": { "present": false, "mechanism": null, "evidence": [] },
+    "tools": [],
+    "resources": [],
+    "storage": [],
+    "network_egress": { "present": false, "allowlist": [], "evidence": [] },
+    "dependencies": { "manifests": [], "lockfiles": [], "evidence": [] }
+  },
+  "findings": [
+    {
+      "id": null,
+      "title": "Finding with missing ID",
+      "severity": "high",
+      "confidence": "high",
+      "safe_mcp": {
+        "techniques": ["SAFE-T0001", "SAFE-T0003"],
+        "tactics": ["initial_access"],
+        "recommended_mitigations": [],
+        "detection_rule_paths": []
+      },
+      "what_is_happening": "Example",
+      "why_it_matters": {
+        "cia": { "confidentiality": "high", "integrity": "high", "availability": "low" },
+        "scope": "example"
+      },
+      "recommendation": "Example",
+      "evidence": [
+        {
+          "path": "b.py",
+          "line_start": 20,
+          "line_end": 20,
+          "excerpt": "b",
+          "notes": "Secondary evidence"
+        },
+        {
+          "path": "a.py",
+          "line_start": 10,
+          "line_end": 10,
+          "excerpt": "a",
+          "notes": "Primary evidence"
+        }
+      ]
+    }
+  ],
+  "unknowns": [
+    {
+      "id": null,
+      "question": "Is authentication enabled?",
+      "why_it_matters": "Unauthenticated access is dangerous.",
+      "how_to_verify": "Check server configuration and deployment settings.",
+      "related_techniques": ["SAFE-T0001"],
+      "evidence": [
+        {
+          "path": "config.yml",
+          "line_start": 1,
+          "line_end": 2,
+          "excerpt": "auth: ???",
+          "notes": "Auth configuration is unclear"
+        },
+        {
+          "path": "README.md",
+          "line_start": 5,
+          "line_end": 5,
+          "excerpt": "TODO: add auth",
+          "notes": "Mentions missing auth"
+        }
+      ]
+    }
+  ],
+  "coverage": []
+}

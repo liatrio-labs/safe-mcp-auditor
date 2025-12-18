@@ -75,7 +75,7 @@
 - [x] 3.2 Implement canonical JSON serialization (deterministic key ordering + stable formatting)
 - [x] 3.3 Add golden normalized JSON fixture and tests proving idempotency and determinism
 
-### [ ] 4.0 Add stable ID generation for findings and unknowns
+### [x] 4.0 Add stable ID generation for findings and unknowns
 
 #### 4.0 Proof Artifact(s)
 
@@ -84,10 +84,10 @@
 
 #### 4.0 Tasks
 
-- [ ] 4.1 Define the normalized hash input string format for findings and unknowns (documented in code)
-- [ ] 4.2 Implement primary-evidence selection rule (sort evidence by `path`, then `line_start`)
-- [ ] 4.3 Implement stable ID generation functions for findings (`F-`) and unknowns (`U-`)
-- [ ] 4.4 Add fixtures/tests ensuring IDs are stable across reordering and error on missing inputs
+- [x] 4.1 Define the normalized hash input string format for findings and unknowns (documented in code)
+- [x] 4.2 Implement primary-evidence selection rule (sort evidence by `path`, then `line_start`)
+- [x] 4.3 Implement stable ID generation functions for findings (`F-`) and unknowns (`U-`)
+- [x] 4.4 Add fixtures/tests ensuring IDs are stable across reordering and error on missing inputs
 
 ### [ ] 5.0 Build deterministic Markdown renderer
 

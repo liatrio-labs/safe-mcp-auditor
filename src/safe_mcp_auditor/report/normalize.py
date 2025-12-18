@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 
+from safe_mcp_auditor.report.ids import stable_finding_id, stable_unknown_id
 from safe_mcp_auditor.report.models import Report, Severity
 
 
@@ -29,8 +30,25 @@ def normalize_report(report: Report) -> Report:
         }
     )
 
+    findings_with_ids = [
+        (
+            finding
+            if finding.id is not None
+            else finding.model_copy(update={"id": stable_finding_id(finding)})
+        )
+        for finding in report.findings
+    ]
+    unknowns_with_ids = [
+        (
+            unknown
+            if unknown.id is not None
+            else unknown.model_copy(update={"id": stable_unknown_id(unknown)})
+        )
+        for unknown in report.unknowns
+    ]
+
     normalized_findings = sorted(
-        report.findings,
+        findings_with_ids,
         key=lambda finding: (_SEVERITY_RANK[finding.severity], finding.id),
     )
 
@@ -40,6 +58,7 @@ def normalize_report(report: Report) -> Report:
         update={
             "inventory": normalized_inventory,
             "findings": normalized_findings,
+            "unknowns": unknowns_with_ids,
             "coverage": normalized_coverage,
         }
     )
