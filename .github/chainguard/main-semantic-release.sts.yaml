@@ -6,4 +6,3 @@ subject_pattern: "repo:liatrio-labs/safe-mcp-auditor:ref:refs/heads/main"
 
 permissions:
   contents: write
-  packages: write

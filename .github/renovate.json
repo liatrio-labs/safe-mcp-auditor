@@ -14,8 +14,6 @@
     {
       "description": "Automerge non-major updates if CI passes",
       "matchUpdateTypes": [
-        "minor",
-        "patch",
         "pin",
         "digest"
       ],
