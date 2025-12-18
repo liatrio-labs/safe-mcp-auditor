@@ -38,6 +38,12 @@ class Evidence(BaseModel):
     excerpt: str
     notes: str
 
+    @model_validator(mode="after")
+    def _validate_line_range(self) -> "Evidence":
+        if self.line_end < self.line_start:
+            raise ValueError("line_end must be >= line_start")
+        return self
+
 
 class LlmModel(BaseModel):
     provider: str

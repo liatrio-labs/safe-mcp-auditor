@@ -5,6 +5,10 @@ import hashlib
 from safe_mcp_auditor.report.models import Evidence, Finding, Unknown
 
 
+def _escape_hash_field(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("|", "\\|")
+
+
 def _primary_evidence(evidence: list[Evidence]) -> Evidence:
     if not evidence:
         raise ValueError("evidence is required to compute a stable ID")
@@ -39,12 +43,14 @@ def finding_hash_input(finding: Finding) -> str:
 
     primary = _primary_evidence(finding.evidence)
 
+    escaped_techniques = [_escape_hash_field(t) for t in techniques]
+
     return "|".join(
         [
             "finding",
-            finding.title,
-            ",".join(techniques),
-            primary.path,
+            _escape_hash_field(finding.title),
+            ",".join(escaped_techniques),
+            _escape_hash_field(primary.path),
             str(primary.line_start),
         ]
     )
@@ -77,12 +83,14 @@ def unknown_hash_input(unknown: Unknown) -> str:
 
     primary = _primary_evidence(unknown.evidence)
 
+    escaped_techniques = [_escape_hash_field(t) for t in techniques]
+
     return "|".join(
         [
             "unknown",
-            unknown.question,
-            ",".join(techniques),
-            primary.path,
+            _escape_hash_field(unknown.question),
+            ",".join(escaped_techniques),
+            _escape_hash_field(primary.path),
             str(primary.line_start),
         ]
     )

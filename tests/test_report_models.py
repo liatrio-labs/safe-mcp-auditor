@@ -2,8 +2,9 @@ import json
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
-from safe_mcp_auditor.report.models import Report
+from safe_mcp_auditor.report.models import Evidence, Report
 
 
 FIXTURES_DIR = Path(__file__).resolve().parent.parent / "fixtures"
@@ -43,3 +44,16 @@ def test_unknowns_require_needs_review_status() -> None:
 
     with pytest.raises(ValueError, match="needs_review"):
         Report.model_validate(data)
+
+
+def test_evidence_rejects_invalid_line_ranges() -> None:
+    with pytest.raises(ValidationError, match="line_end"):
+        Evidence.model_validate(
+            {
+                "path": "a.py",
+                "line_start": 10,
+                "line_end": 5,
+                "excerpt": "x",
+                "notes": "x",
+            }
+        )

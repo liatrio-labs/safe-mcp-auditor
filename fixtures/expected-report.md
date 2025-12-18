@@ -92,4 +92,5 @@ _None._
 | Technique | Applicability | Confidence | Linked findings |
 | --- | --- | --- | --- |
 | `SAFE-T0001` | applicable | high | F-aaaaaaaaaaaa |
+| `SAFE-T0002` | applicable | high | F-bbbbbbbbbbbb |
 | `SAFE-T0003` | applicable | high | F-aaaaaaaaaaaa |

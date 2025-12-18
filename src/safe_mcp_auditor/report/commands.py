@@ -12,8 +12,16 @@ from safe_mcp_auditor.report.render_md import render_report_md
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
 
+def _sanitize_filename_component(value: str, *, max_length: int = 80) -> str:
+    safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in value)
+    safe = safe.lstrip(".")
+    if not safe:
+        safe = "report"
+    return safe[:max_length]
+
+
 def _exit_code_for_status(status: Status) -> int:
-    return {Status.PASS: 0, Status.NEEDS_REVIEW: 1, Status.FAIL: 2}[status]
+    return {Status.PASS: 0, Status.NEEDS_REVIEW: 1, Status.FAIL: 2}.get(status, 3)
 
 
 def _load_report(input_path: Path) -> Report:
@@ -66,7 +74,8 @@ def render(
     reports_dir = Path("reports")
     reports_dir.mkdir(parents=True, exist_ok=True)
 
-    base_name = f"{normalized.metadata.target_name}-{normalized.metadata.input_hash}-safe-mcp-audit"
+    safe_target_name = _sanitize_filename_component(normalized.metadata.target_name)
+    base_name = f"{safe_target_name}-{normalized.metadata.input_hash}-safe-mcp-audit"
     output_json = reports_dir / f"{base_name}.json"
     output_md = reports_dir / f"{base_name}.md"
 

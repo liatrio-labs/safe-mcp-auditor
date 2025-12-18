@@ -106,6 +106,14 @@
   "unknowns": [],
   "coverage": [
     {
+      "technique_id": "SAFE-T0002",
+      "tactic": "exfiltration",
+      "safe_mcp_severity": "low",
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": ["F-bbbbbbbbbbbb"]
+    },
+    {
       "technique_id": "SAFE-T0003",
       "tactic": "initial_access",
       "safe_mcp_severity": "high",

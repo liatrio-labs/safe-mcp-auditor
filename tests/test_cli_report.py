@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -111,6 +112,39 @@ def test_render_writes_reports_and_refuses_overwrite(
     )
     assert second.exit_code != 0
     assert "Refusing to overwrite" in second.output
+
+
+def test_render_sanitizes_target_name_in_filenames(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.chdir(tmp_path)
+
+    data = json.loads((FIXTURES_DIR / "report.json").read_text(encoding="utf-8"))
+    data["metadata"]["target_name"] = "../weird/target\\name:bad"
+
+    report_path = tmp_path / "input.json"
+    report_path.write_text(json.dumps(data), encoding="utf-8")
+
+    result = runner.invoke(
+        app,
+        [
+            "report",
+            "render",
+            "--input",
+            str(report_path),
+        ],
+    )
+
+    assert result.exit_code == 0
+
+    reports_dir = tmp_path / "reports"
+    created = list(reports_dir.iterdir())
+    assert len(created) == 2
+    assert all(path.parent == reports_dir for path in created)
+
+    # Ensure user-controlled path segments do not appear.
+    assert "weird/target" not in result.output
+    assert "target\\name" not in result.output
 
 
 def test_invalid_json_prints_error_and_exits_nonzero(tmp_path: Path) -> None:

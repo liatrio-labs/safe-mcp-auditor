@@ -3,6 +3,10 @@ from __future__ import annotations
 from safe_mcp_auditor.report.models import Evidence, Report, Severity
 
 
+def _sanitize_table_cell(text: str) -> str:
+    return text.replace("|", "\\|").replace("\n", " ").replace("\r", " ")
+
+
 def _render_evidence_table(evidence: list[Evidence]) -> str:
     if not evidence:
         return "_No evidence provided._"
@@ -13,9 +17,9 @@ def _render_evidence_table(evidence: list[Evidence]) -> str:
     ]
 
     for item in sorted(evidence, key=lambda e: (e.path, e.line_start, e.line_end)):
-        lines.append(
-            f"| `{item.path}` | {item.line_start}-{item.line_end} | {item.notes} |"
-        )
+        path = _sanitize_table_cell(item.path)
+        notes = _sanitize_table_cell(item.notes)
+        lines.append(f"| `{path}` | {item.line_start}-{item.line_end} | {notes} |")
 
     return "\n".join(lines)
 
@@ -160,9 +164,14 @@ def render_report_md(report: Report) -> str:
         lines.append("| Technique | Applicability | Confidence | Linked findings |")
         lines.append("| --- | --- | --- | --- |")
         for entry in report.coverage:
-            linked = ", ".join(entry.linked_finding_ids) or "(none)"
+            technique_id = _sanitize_table_cell(entry.technique_id)
+            applicability = _sanitize_table_cell(str(entry.applicability))
+            confidence = _sanitize_table_cell(str(entry.confidence))
+            linked = _sanitize_table_cell(
+                ", ".join(entry.linked_finding_ids) or "(none)"
+            )
             lines.append(
-                f"| `{entry.technique_id}` | {entry.applicability} | {entry.confidence} | {linked} |"
+                f"| `{technique_id}` | {applicability} | {confidence} | {linked} |"
             )
 
     return "\n".join(lines).rstrip() + "\n"

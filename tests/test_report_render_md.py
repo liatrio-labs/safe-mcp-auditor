@@ -20,3 +20,26 @@ def test_markdown_render_matches_golden_fixture() -> None:
     expected = expected_path.read_text(encoding="utf-8")
 
     assert actual == expected
+
+
+def test_markdown_tables_escape_pipes_and_newlines() -> None:
+    data = json.loads((FIXTURES_DIR / "report.json").read_text(encoding="utf-8"))
+    data["findings"][0]["evidence"][0]["notes"] = "note|with\nnewlines"
+    data["coverage"] = [
+        {
+            "technique_id": "SAFE-T0001",
+            "tactic": "initial_access",
+            "safe_mcp_severity": "high",
+            "applicability": "applicable",
+            "confidence": "high",
+            "linked_finding_ids": ["F-aaaaaaaaaaaa|x"],
+        }
+    ]
+
+    report = Report.model_validate(data)
+    normalized = normalize_report(report)
+
+    rendered = render_report_md(normalized)
+
+    assert "note\\|with newlines" in rendered
+    assert "F-aaaaaaaaaaaa\\|x" in rendered
