@@ -1,0 +1,179 @@
+{
+  "coverage": [
+    {
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": [
+        "F-aaaaaaaaaaaa"
+      ],
+      "safe_mcp_severity": "high",
+      "tactic": "initial_access",
+      "technique_id": "SAFE-T0001"
+    },
+    {
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": [
+        "F-aaaaaaaaaaaa"
+      ],
+      "safe_mcp_severity": "high",
+      "tactic": "initial_access",
+      "technique_id": "SAFE-T0003"
+    }
+  ],
+  "findings": [
+    {
+      "confidence": "high",
+      "evidence": [
+        {
+          "excerpt": "do_dangerous()",
+          "line_end": 3,
+          "line_start": 3,
+          "notes": "Example excerpt",
+          "path": "server.py"
+        }
+      ],
+      "id": "F-aaaaaaaaaaaa",
+      "recommendation": "Fix the issue quickly.",
+      "safe_mcp": {
+        "detection_rule_paths": [],
+        "recommended_mitigations": [
+          "SAFE-M-2"
+        ],
+        "tactics": [
+          "initial_access"
+        ],
+        "techniques": [
+          "SAFE-T0001",
+          "SAFE-T0003"
+        ]
+      },
+      "severity": "high",
+      "title": "High severity finding",
+      "what_is_happening": "A high-risk issue was found.",
+      "why_it_matters": {
+        "cia": {
+          "availability": "low",
+          "confidentiality": "high",
+          "integrity": "medium"
+        },
+        "scope": "example"
+      }
+    },
+    {
+      "confidence": "high",
+      "evidence": [
+        {
+          "excerpt": "print('hello')",
+          "line_end": 12,
+          "line_start": 10,
+          "notes": "Example excerpt",
+          "path": "app.py"
+        }
+      ],
+      "id": "F-bbbbbbbbbbbb",
+      "recommendation": "Fix the issue.",
+      "safe_mcp": {
+        "detection_rule_paths": [],
+        "recommended_mitigations": [
+          "SAFE-M-1"
+        ],
+        "tactics": [
+          "exfiltration"
+        ],
+        "techniques": [
+          "SAFE-T0002"
+        ]
+      },
+      "severity": "low",
+      "title": "Low severity finding",
+      "what_is_happening": "A low-risk issue was found.",
+      "why_it_matters": {
+        "cia": {
+          "availability": "low",
+          "confidentiality": "low",
+          "integrity": "low"
+        },
+        "scope": "example"
+      }
+    }
+  ],
+  "inventory": {
+    "auth": {
+      "evidence": [],
+      "mechanism": null,
+      "present": false
+    },
+    "dependencies": {
+      "evidence": [],
+      "lockfiles": [],
+      "manifests": []
+    },
+    "entrypoints": [],
+    "languages": [
+      "python"
+    ],
+    "mcp_transport": "unknown",
+    "network_egress": {
+      "allowlist": [],
+      "evidence": [],
+      "present": false
+    },
+    "resources": [],
+    "storage": [],
+    "tools": [
+      {
+        "capabilities": [],
+        "description": "First tool",
+        "evidence": [],
+        "name": "a-tool",
+        "schema": null
+      },
+      {
+        "capabilities": [
+          "filesystem_read"
+        ],
+        "description": "Second tool",
+        "evidence": [],
+        "name": "b-tool",
+        "schema": null
+      }
+    ]
+  },
+  "metadata": {
+    "analyzed_at": "2025-01-01T00:00:00Z",
+    "app_version": "0.1.0",
+    "input_hash": "deadbeef",
+    "input_path": "./example",
+    "input_type": "directory",
+    "models": {
+      "embedder": {
+        "model": "stub",
+        "provider": "offline"
+      },
+      "llm": {
+        "model": "stub",
+        "provider": "offline",
+        "temperature": 0
+      }
+    },
+    "run_id": "00000000-0000-0000-0000-000000000000",
+    "safe_mcp_knowledge_pack_hash": "abc123",
+    "safe_mcp_manifest_path": "knowledge/safe-mcp/manifest.json",
+    "safe_mcp_reference": "SAFE-MCP@dev",
+    "scope": {
+      "excluded_paths": [
+        ".venv",
+        "node_modules",
+        "reports"
+      ],
+      "included_paths": [
+        "."
+      ]
+    },
+    "target_name": "example-target"
+  },
+  "schema_version": "1.0.0",
+  "status": "pass",
+  "unknowns": []
+}

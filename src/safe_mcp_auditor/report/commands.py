@@ -5,6 +5,7 @@ import typer
 from pydantic import ValidationError
 
 from safe_mcp_auditor.report.models import Report, Status
+from safe_mcp_auditor.report.normalize import normalize_report, serialize_report_json
 
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -41,8 +42,15 @@ def normalize(
     input: Path = typer.Option(..., "--input", exists=True, readable=True),
     output: Path = typer.Option(..., "--output"),
 ) -> None:
-    """Normalize an audit report (stable IDs + ordering) and write JSON."""
-    raise typer.Exit(code=0)
+    """Normalize an audit report (stable ordering) and write JSON."""
+    report = _load_report(input)
+    normalized = normalize_report(report)
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(serialize_report_json(normalized), encoding="utf-8")
+
+    typer.echo(str(output))
+    raise typer.Exit(code=_exit_code_for_status(normalized.status))
 
 
 @app.command()

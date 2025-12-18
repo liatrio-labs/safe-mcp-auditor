@@ -62,7 +62,7 @@
 - [x] 2.3 Create a minimal valid fixture (`fixtures/report.json`) covering all required fields
 - [x] 2.4 Add model validation tests for valid/invalid inputs and readable error messages
 
-### [ ] 3.0 Implement deterministic report normalization
+### [x] 3.0 Implement deterministic report normalization
 
 #### 3.0 Proof Artifact(s)
 
@@ -71,9 +71,9 @@
 
 #### 3.0 Tasks
 
-- [ ] 3.1 Implement a normalization function that sorts arrays per spec (findings, tools, coverage)
-- [ ] 3.2 Implement canonical JSON serialization (deterministic key ordering + stable formatting)
-- [ ] 3.3 Add golden normalized JSON fixture and tests proving idempotency and determinism
+- [x] 3.1 Implement a normalization function that sorts arrays per spec (findings, tools, coverage)
+- [x] 3.2 Implement canonical JSON serialization (deterministic key ordering + stable formatting)
+- [x] 3.3 Add golden normalized JSON fixture and tests proving idempotency and determinism
 
 ### [ ] 4.0 Add stable ID generation for findings and unknowns
 
