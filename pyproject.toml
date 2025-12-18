@@ -1,0 +1,24 @@
+[project]
+name = "safe-mcp-auditor"
+version = "0.1.0"
+description = "Add your description here"
+authors = [
+    { name = "Damien Storm", email = "damien.r.storm@gmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.12.5",
+    "typer>=0.20.0",
+]
+
+[project.scripts]
+safe-mcp-auditor = "safe_mcp_auditor.cli:main"
+
+[build-system]
+requires = ["uv_build>=0.9.17,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]

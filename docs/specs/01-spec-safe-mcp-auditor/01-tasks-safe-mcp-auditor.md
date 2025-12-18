@@ -1,3 +1,5 @@
+<!-- markdownlint-disable MD013 -->
+
 # 01-tasks-safe-mcp-auditor.md
 
 ## Relevant Files
@@ -31,7 +33,7 @@
 
 ## Tasks
 
-### [ ] 1.0 Scaffold `uv` project and Typer CLI
+### [x] 1.0 Scaffold `uv` project and Typer CLI
 
 #### 1.0 Proof Artifact(s)
 
@@ -41,10 +43,10 @@
 
 #### 1.0 Tasks
 
-- [ ] 1.1 Initialize Python project with `uv` and add a minimal package layout under `src/`
-- [ ] 1.2 Add Typer-based CLI entrypoint `safe-mcp-auditor` with `report` subcommand group
-- [ ] 1.3 Add baseline test harness (pytest + Typer/Click runner) and a CLI smoke test
-- [ ] 1.4 Update `.gitignore` to exclude local artifacts (`.venv/`, `reports/`, `.crewai_storage/`)
+- [x] 1.1 Initialize Python project with `uv` and add a minimal package layout under `src/`
+- [x] 1.2 Add Typer-based CLI entrypoint `safe-mcp-auditor` with `report` subcommand group
+- [x] 1.3 Add baseline test harness (pytest + Typer/Click runner) and a CLI smoke test
+- [x] 1.4 Update `.gitignore` to exclude local artifacts (`.venv/`, `reports/`, `.crewai_storage/`)
 
 ### [ ] 2.0 Define canonical JSON report model
 

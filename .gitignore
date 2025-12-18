@@ -1,1 +1,7 @@
-temp
+.venv/
+reports/
+.crewai_storage/
+__pycache__/
+*.pyc
+.pytest_cache/
+temp/
