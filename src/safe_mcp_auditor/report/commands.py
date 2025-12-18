@@ -1,9 +1,29 @@
+import json
 from pathlib import Path
 
 import typer
+from pydantic import ValidationError
+
+from safe_mcp_auditor.report.models import Report, Status
 
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
+
+
+def _exit_code_for_status(status: Status) -> int:
+    return {Status.PASS: 0, Status.NEEDS_REVIEW: 1, Status.FAIL: 2}[status]
+
+
+def _load_report(input_path: Path) -> Report:
+    try:
+        data = json.loads(input_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"Invalid JSON: {exc}") from exc
+
+    try:
+        return Report.model_validate(data)
+    except ValidationError as exc:
+        raise typer.BadParameter(str(exc)) from exc
 
 
 @app.command()
@@ -11,7 +31,9 @@ def validate(
     input: Path = typer.Option(..., "--input", exists=True, readable=True),
 ) -> None:
     """Validate an audit report JSON file against the schema."""
-    raise typer.Exit(code=0)
+    report = _load_report(input)
+    typer.echo("Report is valid")
+    raise typer.Exit(code=_exit_code_for_status(report.status))
 
 
 @app.command()

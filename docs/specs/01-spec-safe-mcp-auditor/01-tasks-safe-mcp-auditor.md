@@ -48,7 +48,7 @@
 - [x] 1.3 Add baseline test harness (pytest + Typer/Click runner) and a CLI smoke test
 - [x] 1.4 Update `.gitignore` to exclude local artifacts (`.venv/`, `reports/`, `.crewai_storage/`)
 
-### [ ] 2.0 Define canonical JSON report model
+### [x] 2.0 Define canonical JSON report model
 
 #### 2.0 Proof Artifact(s)
 
@@ -57,10 +57,10 @@
 
 #### 2.0 Tasks
 
-- [ ] 2.1 Create Pydantic models for report schema v1 (metadata, inventory, findings, unknowns, coverage)
-- [ ] 2.2 Add enums and validation rules (status, severity, confidence, applicability)
-- [ ] 2.3 Create a minimal valid fixture (`fixtures/report.json`) covering all required fields
-- [ ] 2.4 Add model validation tests for valid/invalid inputs and readable error messages
+- [x] 2.1 Create Pydantic models for report schema v1 (metadata, inventory, findings, unknowns, coverage)
+- [x] 2.2 Add enums and validation rules (status, severity, confidence, applicability)
+- [x] 2.3 Create a minimal valid fixture (`fixtures/report.json`) covering all required fields
+- [x] 2.4 Add model validation tests for valid/invalid inputs and readable error messages
 
 ### [ ] 3.0 Implement deterministic report normalization
 
