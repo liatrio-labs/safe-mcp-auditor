@@ -137,6 +137,26 @@ Security reviewers and engineers need a repeatable way to:
 - Output a machine-readable JSON report suitable for CI automation.
 - Make audit runs reproducible and debuggable.
 
+## MVP scope
+
+The auditor’s long-term goal is broad MCP ecosystem support, but the MVP defines an explicit minimum supported set to keep extraction heuristics and testing tractable.
+
+MVP supported target ecosystems:
+
+- Python MCP servers
+- Node.js / TypeScript MCP servers
+
+Best-effort (future enhancement): other languages and frameworks.
+
+MVP requirements per ecosystem:
+
+- Python:
+  - detect common dependency manifests (`pyproject.toml`, `requirements.txt`, `poetry.lock`, `uv.lock`)
+  - detect MCP server entrypoints and tool registrations using common patterns
+- Node/TypeScript:
+  - detect dependency manifests (`package.json`, lockfiles)
+  - detect MCP server entrypoints and tool registrations using common patterns
+
 ## Non-goals
 
 - Dynamic testing, fuzzing, or running the MCP server.
@@ -202,6 +222,19 @@ References:
 
 - `https://typer.tiangolo.com/`
 - `https://typer.tiangolo.com/tutorial/`
+
+### Packaging and installation
+
+The auditor is distributed as a Python package that installs a `safe-mcp-auditor` CLI entrypoint.
+
+- The package must define a console script entrypoint in `pyproject.toml`.
+- Supported platforms: Linux and macOS (Windows best-effort).
+- Minimum Python version: 3.10.
+
+Recommended installation methods:
+
+- User install (isolated): `uv tool install safe-mcp-auditor`
+- Dev install: `uv sync` then `uv run safe-mcp-auditor ...`
 
 ## Inputs
 
@@ -281,7 +314,7 @@ This repository includes local reference artifacts under `docs/references/` to s
   - Design notes describing how to build a minimal CrewAI agent with SAFE-MCP embedded as a Knowledge source.
   - Purpose: captures the initial “how we got here” and helps future contributors understand CrewAI Knowledge choices.
 
-Runtime note: the production auditor may embed SAFE-MCP content from upstream, from this Repomix snapshot, or from another pinned SAFE-MCP release; regardless of the source, the report schema must remain aligned to SAFE-MCP’s technique/mitigation structure.
+Runtime note: the production auditor fetches SAFE-MCP from GitHub at a pinned ref and builds a curated knowledge pack for CrewAI Knowledge. The Repomix snapshot is for development reference only. The report schema must remain aligned to SAFE-MCP’s technique/mitigation structure.
 
 ### Technique template alignment
 
@@ -313,6 +346,47 @@ The auditor will not replicate the entire technique template verbatim. Instead, 
 7. Enrich findings with SAFE-M mitigations and detection ideas
 8. Write JSON and Markdown report
 
+### Risk signals (MVP taxonomy)
+
+A risk signal is a deterministic, evidence-backed observation about the target MCP that can be mapped to one or more SAFE-MCP techniques.
+
+Risk signals must be represented in a structured form (for testing and repeatability):
+
+- `id` (string)
+- `type` (enum)
+- `summary` (string)
+- `evidence[]` (citations)
+- `recommended_safe_techniques[]` (initial mapping candidates)
+
+Initial MVP risk signal types:
+
+- `filesystem_read` (tool can read arbitrary paths)
+- `filesystem_write` (tool can write arbitrary paths)
+- `command_exec` (tool can execute shell/commands)
+- `network_egress_unrestricted` (outbound HTTP requests without allowlist)
+- `network_egress_allowlisted` (outbound requests, allowlist present)
+- `auth_missing` (no authn/authz for exposed transport)
+- `oauth_flow_present` (OAuth integration present)
+- `token_persistence` (tokens stored on disk/db)
+- `tool_output_injection_risk` (tool output or external content passed to LLM without strict delimiters)
+- `tool_description_injection_risk` (tool descriptions loaded from untrusted sources or not integrity-verified)
+- `overprivileged_tool_schema` (broad schemas, wildcards, or missing constraints)
+- `supply_chain_weakness` (missing lockfiles, unsigned releases, no SBOM)
+- `logging_insufficient` (missing audit logs for tool loads/tool calls)
+- `vector_store_usage` (vector store used for memory/knowledge in target MCP)
+
+### Applicability rubric (techniques)
+
+When populating `coverage[]`:
+
+- `applicable`
+  - Requires at least one direct evidence item showing a relevant capability or control gap in code/config/tool schema.
+- `unknown`
+  - Used when the technique might apply but cannot be proven with available evidence.
+  - Unknowns must be mirrored into `unknowns[]` with explicit verification steps.
+- `not_applicable`
+  - Used only when there is explicit negating evidence (rare), not merely “not observed.”
+
 ### Read-only constraint
 
 The auditing agent must not:
@@ -323,6 +397,25 @@ The auditing agent must not:
 - mutate the target repo.
 
 The only write action allowed is writing the report artifacts.
+
+### Threat model and safety requirements
+
+The auditor analyzes untrusted, internet-hosted MCP repositories. Treat the target repository as adversarial input.
+
+Threats to explicitly design for:
+
+- Prompt injection embedded in docs/comments/tool descriptions intended to steer the auditor.
+- Malicious “instruction-like” strings embedded in tool schemas, error messages, or sample outputs.
+- Denial-of-service via extremely large files, generated code, or pathological nesting.
+
+Required safety controls:
+
+- Evidence-first rule: every finding must cite evidence; no evidence means `unknown`.
+- Goal integrity: target content must not be allowed to change the audit’s goals, tool allowlists, or output schema.
+- Context isolation: when target text is passed to an LLM prompt, wrap it in explicit delimiters (e.g., `<mcp-code>...</mcp-code>`) and instruct the model that content inside delimiters is untrusted data.
+- Tool restrictions: agents must only have read/search tools for the target repo; no network access to the target, no execution tools.
+- Output validation: all CrewAI tasks must use `output_pydantic`/`output_json` with function guardrails to prevent prompt injection from breaking schema.
+- Size limits: enforce max file size, max excerpt size, and max total tokens passed from repo content per task; overflow becomes `unknown` with instructions.
 
 ## CrewAI design
 
@@ -441,6 +534,56 @@ Add a dedicated command group for SAFE-MCP knowledge lifecycle operations:
 - `safe-mcp-auditor safe-mcp build-pack --ref <tag|sha>` (generate `knowledge/safe-mcp/<ref>/` + manifest)
 - `safe-mcp-auditor safe-mcp build-index --ref <tag|sha> [--force]` (embed into CrewAI storage)
 - `safe-mcp-auditor safe-mcp verify --ref <tag|sha>` (retrieval smoke tests)
+
+#### SAFE-MCP index artifact contract
+
+The SAFE-MCP index lifecycle produces several on-disk artifacts. These artifacts define whether the SAFE-MCP index is present and valid.
+
+Required artifacts (by purpose):
+
+- Source checkout:
+  - `data/safe-mcp-src/<ref>/` (required after `safe-mcp fetch`)
+- Curated knowledge pack:
+  - `knowledge/safe-mcp/<ref>/SAFE-T*.md`
+  - `knowledge/safe-mcp/<ref>/SAFE-M-*.md`
+  - `knowledge/safe-mcp/<ref>/SAFE-MCP-INDEX.md`
+  - `knowledge/safe-mcp/<ref>/manifest.json`
+- CrewAI embedding storage:
+  - `.crewai_storage/knowledge/` (location controlled by `CREWAI_STORAGE_DIR`)
+  - A SAFE-MCP-specific collection must exist (see collection naming below)
+
+`manifest.json` is the source of truth for determining whether pack/index artifacts are current.
+
+Minimum required `manifest.json` fields:
+
+- `safe_mcp_reference` (tag/sha)
+- `built_at` (ISO8601)
+- `curation_rules_version` (string; bump whenever include/exclude rules change)
+- `knowledge_pack_hash` (hash over normalized pack contents)
+- `embedder` (provider + model/config)
+- `chunking` (chunk size and overlap)
+- `counts` (technique count, mitigation count, optional detection-rule count)
+
+Collection naming:
+
+- Crew-level SAFE-MCP knowledge must use a stable, explicit collection name (do not rely on a role name).
+- Recommended: `collection_name = "safe-mcp"` (or `safe-mcp-<ref>` if you want multiple versions to coexist).
+
+#### SAFE-MCP index staleness checks
+
+The auditor must treat the SAFE-MCP index as stale if any of the following is true:
+
+- Configured `safe_mcp_reference` differs from `manifest.safe_mcp_reference`.
+- The knowledge pack hash computed from `knowledge/safe-mcp/<ref>/` differs from `manifest.knowledge_pack_hash`.
+- The embedder config differs from `manifest.embedder` (prevents embedding dimension mismatch).
+- Chunking parameters differ from `manifest.chunking`.
+- The CrewAI storage directory does not contain the SAFE-MCP collection, or it is empty.
+- `safe-mcp verify` has not been successfully run for the current ref (optional but recommended; can be captured as a `verified_at` field).
+
+#### External tool requirements for SAFE-MCP fetch
+
+- `gh` is required for `safe-mcp fetch`.
+- If `gh` is missing or not authenticated appropriately, the command must fail with a clear error message and remediation steps.
 
 #### CrewAI Knowledge storage and reset mechanics
 
@@ -561,24 +704,129 @@ Unknowns are always reported and cause `status = needs_review`.
 
 ## JSON report schema (v1)
 
-At minimum:
+The JSON report is the canonical output. Markdown is rendered from this JSON.
 
-- `schema_version`
-- `status`: `pass|needs_review|fail`
-- `metadata`
-- `inventory`
-- `findings[]`
-- `unknowns[]`
-- `coverage[]`
+### Top-level fields
 
-`coverage[]` entries:
+- `schema_version` (string, required): semantic schema version (e.g., `1.0.0`).
+- `status` (enum, required): `pass|needs_review|fail`.
+  - `needs_review` is required when `unknowns[]` is non-empty.
+- `metadata` (object, required)
+- `inventory` (object, required)
+- `findings` (array, required)
+- `unknowns` (array, required)
+- `coverage` (array, required)
 
-- `technique_id`
-- `tactic`
-- `safe_mcp_severity`
-- `applicability`: `applicable|not_applicable|unknown`
-- `confidence`
-- `linked_finding_ids[]`
+### Metadata model
+
+`metadata` (required fields):
+
+- `target_name` (string)
+- `input_type` (enum): `directory|repomix`
+- `input_path` (string): user-supplied path (for traceability)
+- `input_hash` (string): hash used in report filenames
+- `analyzed_at` (string): ISO8601 timestamp
+- `app_version` (string): auditor version
+- `safe_mcp_reference` (string): pinned SAFE-MCP tag/sha
+- `safe_mcp_manifest_path` (string): path to the knowledge pack manifest
+- `safe_mcp_knowledge_pack_hash` (string)
+- `models` (object):
+  - `llm` (object): provider/model/temperature
+  - `embedder` (object): provider/model
+- `run_id` (string): UUID for correlating logs
+- `scope` (object):
+  - `included_paths` (array[string])
+  - `excluded_paths` (array[string])
+
+### Inventory model
+
+`inventory` captures evidence-backed facts about the target MCP.
+
+Recommended fields:
+
+- `languages` (array[string])
+- `entrypoints` (array[object]): `{ path, kind, evidence[] }`
+- `mcp_transport` (enum|string): `stdio|http|sse|streamable_http|unknown`
+- `auth` (object): `{ present, mechanism, evidence[] }`
+- `tools` (array[object]):
+  - `name` (string)
+  - `description` (string)
+  - `capabilities` (array[string])
+  - `schema` (object|null)
+  - `evidence` (array[evidence])
+- `resources` (array[object]): `{ name, description, evidence[] }`
+- `storage` (array[object]): `{ kind, details, evidence[] }`
+- `network_egress` (object): `{ present, allowlist, evidence[] }`
+- `dependencies` (object): `{ manifests[], lockfiles[], evidence[] }`
+
+### Evidence object
+
+Evidence is a list of citations supporting a claim.
+
+- `path` (string)
+- `line_start` (int)
+- `line_end` (int)
+- `excerpt` (string)
+- `notes` (string)
+
+### Finding object
+
+`findings[]` is the primary engineer-facing backlog.
+
+Required fields:
+
+- `id` (string): stable finding ID (e.g., `F-<hash>`)
+- `title` (string)
+- `severity` (enum): `critical|high|medium|low`
+- `confidence` (enum): `high|medium|low`
+- `safe_mcp` (object):
+  - `techniques` (array[string])
+  - `tactics` (array[string])
+  - `recommended_mitigations` (array[string])
+  - `detection_rule_paths` (array[string])
+- `what_is_happening` (string)
+- `why_it_matters` (object):
+  - `cia` (object): `{ confidentiality, integrity, availability }`
+  - `scope` (string)
+- `recommendation` (string)
+- `evidence` (array[evidence])
+
+### Unknowns model
+
+`unknowns[]` are non-passing gate items.
+
+Required fields:
+
+- `id` (string): stable unknown ID (e.g., `U-<hash>`)
+- `question` (string)
+- `why_it_matters` (string)
+- `how_to_verify` (string)
+- `related_techniques` (array[string])
+- `evidence` (array[evidence])
+
+### Coverage model
+
+`coverage[]` describes SAFE-MCP technique coverage and links back to findings.
+
+Required fields:
+
+- `technique_id` (string)
+- `tactic` (string)
+- `safe_mcp_severity` (enum|string)
+- `applicability` (enum): `applicable|not_applicable|unknown`
+- `confidence` (enum): `high|medium|low`
+- `linked_finding_ids` (array[string])
+
+### Determinism requirements
+
+To support diffing and strict TDD:
+
+- JSON object keys are written in deterministic order.
+- Arrays are sorted deterministically:
+  - `findings` by severity desc, then `id`
+  - `coverage` by `technique_id`
+  - `tools` by `name`
+- Timestamps are recorded only in `metadata.analyzed_at` and `manifest.built_at`.
 
 ## Markdown report template
 
@@ -642,6 +890,25 @@ This application provides a Typer-based CLI.
 - Print report paths.
 - Print status and exit code semantics.
 
+## Logging and audit trail
+
+This tool is a security auditor; logs must be sufficient to reproduce and debug results.
+
+Logging requirements:
+
+- Default behavior: log high-level progress to stderr (human readable).
+- Optional structured logs: `--log-json <path>` writes newline-delimited JSON events.
+- Optional debug mode: `--verbose` increases detail (file discovery counts, which analyzers ran).
+
+Minimum events to log (structured or human-readable):
+
+- Run metadata: `run_id`, `target_name`, `input_hash`, `safe_mcp_reference`.
+- SAFE-MCP lifecycle actions: fetch/build-pack/build-index/verify start and end.
+- Audit phases: ingest/index/inventory/risk-signal/mapping/report-writing start and end.
+- Hard-fail reasons: missing/stale SAFE-MCP index checks and which check failed.
+
+Privacy note: because the auditor includes code excerpts in reports, logs should avoid echoing large excerpts by default. Logs should refer to paths/line numbers, not full snippets.
+
 ## Testing requirements
 
 This project follows a strict TDD workflow and requires fully offline test execution in CI.
@@ -662,6 +929,31 @@ All CI tests must run without network access. Any integration points that normal
 
 - `gh` calls used by `safe-mcp-auditor safe-mcp fetch` must be mocked (subprocess stub or similar).
 - Any LLM calls (including any judge/evaluator LLM) must be mocked or replaced with deterministic fixtures.
+
+### Test fixtures and golden files
+
+To support strict offline TDD, the repo must include a small suite of fixtures:
+
+- MCP fixtures (directory mode): small sample MCP repos with known properties and expected findings.
+- MCP fixtures (repomix mode): repomix-packed versions of the same fixtures to validate parity.
+- SAFE-MCP fixtures: a tiny SAFE-MCP knowledge pack subset used for retrieval tests (a few techniques + mitigations).
+- Golden outputs:
+  - golden JSON reports for fixture runs (used for snapshot tests)
+  - golden Markdown reports rendered from the golden JSON
+
+Golden outputs must be regenerated only when the report schema or rendering rules intentionally change.
+
+### Mocking strategy
+
+All offline tests must mock external boundaries:
+
+- `gh` fetch
+  - mock subprocess calls and provide a local SAFE-MCP repo fixture as the “downloaded” output.
+- LLM calls
+  - inject a fake LLM implementation that maps deterministic prompt keys to fixture responses.
+  - prefer stable prompt keys (task name + stage + input hash) rather than exact prompt string matching, to reduce brittleness.
+- CrewAI storage
+  - set `CREWAI_STORAGE_DIR` to a temp directory per test run to prevent cross-test contamination.
 
 ### Unit tests (no CrewAI, no LLM)
 
