@@ -89,7 +89,7 @@
 - [x] 4.3 Implement stable ID generation functions for findings (`F-`) and unknowns (`U-`)
 - [x] 4.4 Add fixtures/tests ensuring IDs are stable across reordering and error on missing inputs
 
-### [ ] 5.0 Build deterministic Markdown renderer
+### [x] 5.0 Build deterministic Markdown renderer
 
 #### 5.0 Proof Artifact(s)
 
@@ -98,9 +98,9 @@
 
 #### 5.0 Tasks
 
-- [ ] 5.1 Implement a pure Markdown rendering function with fixed section ordering
-- [ ] 5.2 Define deterministic formatting conventions (headings, lists, tables, whitespace)
-- [ ] 5.3 Add golden Markdown fixture and tests verifying byte-identical output
+- [x] 5.1 Implement a pure Markdown rendering function with fixed section ordering
+- [x] 5.2 Define deterministic formatting conventions (headings, lists, tables, whitespace)
+- [x] 5.3 Add golden Markdown fixture and tests verifying byte-identical output
 
 ### [ ] 6.0 Finalize `report` CLI UX and exit codes
 

@@ -6,6 +6,7 @@ from pydantic import ValidationError
 
 from safe_mcp_auditor.report.models import Report, Status
 from safe_mcp_auditor.report.normalize import normalize_report, serialize_report_json
+from safe_mcp_auditor.report.render_md import render_report_md
 
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
@@ -58,4 +59,24 @@ def render(
     input: Path = typer.Option(..., "--input", exists=True, readable=True),
 ) -> None:
     """Render a deterministic Markdown report under reports/."""
-    raise typer.Exit(code=0)
+
+    report = _load_report(input)
+    normalized = normalize_report(report)
+
+    reports_dir = Path("reports")
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    base_name = f"{normalized.metadata.target_name}-{normalized.metadata.input_hash}-safe-mcp-audit"
+    output_json = reports_dir / f"{base_name}.json"
+    output_md = reports_dir / f"{base_name}.md"
+
+    if output_json.exists() or output_md.exists():
+        raise typer.BadParameter(f"Refusing to overwrite existing report: {output_md}")
+
+    output_json.write_text(serialize_report_json(normalized), encoding="utf-8")
+    output_md.write_text(render_report_md(normalized), encoding="utf-8")
+
+    typer.echo(str(output_json))
+    typer.echo(str(output_md))
+
+    raise typer.Exit(code=_exit_code_for_status(normalized.status))
