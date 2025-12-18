@@ -1,6 +1,12 @@
 # SAFE-MCP Auditor
 
-A small, offline-first CLI that for auditing MCP codebases against the SAFE-MCP framework by producing SAFE-MCP audit reports. 
+An offline-first CLI to audit MCP repositories against SAFE-MCP and produce deterministic reports.
+
+## Documentation
+
+- Development: `docs/development.md`
+- Architecture: `docs/ARCHITECTURE.md`
+- Contributing: `CONTRIBUTING.md`
 
 ## What This App Does (Today)
 
@@ -18,6 +24,19 @@ uv run safe-mcp-auditor report validate --input fixtures/report.json
 uv run safe-mcp-auditor report normalize --input fixtures/report.json --output /tmp/normalized.json
 uv run safe-mcp-auditor report render --input fixtures/report.json
 ```
+
+## Development
+
+```bash
+uv sync --all-groups
+uv run pre-commit install
+uv run pre-commit run --all-files
+uv run pytest
+```
+
+## Releases
+
+Releases are automated via `python-semantic-release` in GitHub Actions. Conventional Commits on `main` trigger version bumps and generate `CHANGELOG.md`.
 
 ## Roadmap (From PRD)
 

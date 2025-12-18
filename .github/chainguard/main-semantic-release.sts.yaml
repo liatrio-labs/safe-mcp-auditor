@@ -1,0 +1,9 @@
+issuer: https://token.actions.githubusercontent.com
+
+# The pattern defines which repo and branch can generate a token with the permissions below.
+# Format: "repo:{owner}/{repo-name}:ref:refs/heads/{branch}"
+subject_pattern: "repo:liatrio-labs/safe-mcp-auditor:ref:refs/heads/main"
+
+permissions:
+  contents: write
+  packages: write

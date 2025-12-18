@@ -1,7 +1,7 @@
 [project]
 name = "safe-mcp-auditor"
 version = "0.1.0"
-description = "Add your description here"
+description = "Offline-first CLI to audit MCP repositories against SAFE-MCP and produce deterministic reports."
 authors = [
     { name = "Damien Storm", email = "damien.r.storm@gmail.com" }
 ]
@@ -20,5 +20,8 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.3.0",
     "pytest>=9.0.2",
+    "python-semantic-release>=10.0.0,<11.0.0",
+    "ruff>=0.12.5",
 ]
