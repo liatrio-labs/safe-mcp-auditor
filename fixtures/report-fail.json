@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0.0",
+  "status": "fail",
+  "metadata": {
+    "target_name": "example-target",
+    "input_type": "directory",
+    "input_path": "./example",
+    "input_hash": "deadbeef",
+    "analyzed_at": "2025-01-01T00:00:00Z",
+    "app_version": "0.1.0",
+    "safe_mcp_reference": "SAFE-MCP@dev",
+    "safe_mcp_manifest_path": "knowledge/safe-mcp/manifest.json",
+    "safe_mcp_knowledge_pack_hash": "abc123",
+    "models": {
+      "llm": { "provider": "offline", "model": "stub", "temperature": 0 },
+      "embedder": { "provider": "offline", "model": "stub" }
+    },
+    "run_id": "00000000-0000-0000-0000-000000000000",
+    "scope": {
+      "included_paths": ["."],
+      "excluded_paths": [".venv", "node_modules", "reports"]
+    }
+  },
+  "inventory": {
+    "languages": ["python"],
+    "entrypoints": [],
+    "mcp_transport": "unknown",
+    "auth": { "present": false, "mechanism": null, "evidence": [] },
+    "tools": [],
+    "resources": [],
+    "storage": [],
+    "network_egress": { "present": false, "allowlist": [], "evidence": [] },
+    "dependencies": { "manifests": [], "lockfiles": [], "evidence": [] }
+  },
+  "findings": [],
+  "unknowns": [],
+  "coverage": []
+}

@@ -102,7 +102,7 @@
 - [x] 5.2 Define deterministic formatting conventions (headings, lists, tables, whitespace)
 - [x] 5.3 Add golden Markdown fixture and tests verifying byte-identical output
 
-### [ ] 6.0 Finalize `report` CLI UX and exit codes
+### [x] 6.0 Finalize `report` CLI UX and exit codes
 
 #### 6.0 Proof Artifact(s)
 
@@ -111,8 +111,8 @@
 
 #### 6.0 Tasks
 
-- [ ] 6.1 Implement `report validate` to validate JSON input and map `status` to exit codes
-- [ ] 6.2 Implement `report normalize` to validate, compute IDs, apply ordering, and write canonical JSON
-- [ ] 6.3 Implement `report render` to validate/normalize and write Markdown to `reports/` without overwrite
-- [ ] 6.4 Add CLI tests for exit codes (`pass`=0, `needs_review`=1, `fail`=2) and error cases
-- [ ] 6.5 Ensure report filenames follow the PRD convention using JSON metadata (target + input hash)
+- [x] 6.1 Implement `report validate` to validate JSON input and map `status` to exit codes
+- [x] 6.2 Implement `report normalize` to validate, compute IDs, apply ordering, and write canonical JSON
+- [x] 6.3 Implement `report render` to validate/normalize and write Markdown to `reports/` without overwrite
+- [x] 6.4 Add CLI tests for exit codes (`pass`=0, `needs_review`=1, `fail`=2) and error cases
+- [x] 6.5 Ensure report filenames follow the PRD convention using JSON metadata (target + input hash)
