@@ -7,8 +7,10 @@
 - `pyproject.toml` - Project metadata, dependencies, and console script entrypoint.
 - `uv.lock` - Locked dependencies for reproducible installs.
 - `.gitignore` - Ensure `reports/`, `.venv/`, and local caches are ignored.
+- `.python-version` - Local Python version pin for reproducible dev setup.
 - `src/safe_mcp_auditor/__init__.py` - Package entry.
 - `src/safe_mcp_auditor/cli.py` - Root Typer app and command wiring.
+- `src/safe_mcp_auditor/report/__init__.py` - Report package marker.
 - `src/safe_mcp_auditor/report/commands.py` - Typer `report` command group (`validate`, `normalize`, `render`).
 - `src/safe_mcp_auditor/report/models.py` - Pydantic report schema models.
 - `src/safe_mcp_auditor/report/normalize.py` - Deterministic sorting + canonical JSON serialization.
@@ -21,8 +23,11 @@
 - `tests/test_report_render_md.py` - Golden Markdown snapshot tests.
 - `fixtures/report.json` - Minimal valid fixture report for tests.
 - `fixtures/report-missing-ids.json` - Fixture missing `F-`/`U-` IDs to exercise generation.
+- `fixtures/report-fail.json` - Fixture with `status=fail` to exercise exit codes.
 - `fixtures/expected-normalized.json` - Golden normalized JSON output for determinism tests.
 - `fixtures/expected-report.md` - Golden rendered Markdown output.
+- `docs/specs/01-spec-safe-mcp-auditor/01-tasks-safe-mcp-auditor.md` - Execution plan, proof artifacts, and validation scope.
+- `docs/specs/01-spec-safe-mcp-auditor/01-proofs/*.md` - Proof artifacts (CLI outputs, test runs).
 
 ### Notes
 
