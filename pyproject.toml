@@ -1,6 +1,6 @@
 [project]
 name = "safe-mcp-auditor"
-version = "0.1.0"
+version = "0.0.0"
 description = "Offline-first CLI to audit MCP repositories against SAFE-MCP and produce deterministic reports."
 authors = [
     { name = "Damien Storm", email = "damien.r.storm@gmail.com" }
