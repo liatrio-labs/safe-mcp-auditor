@@ -15,27 +15,30 @@
 - SAFE-MCP Techniques: SAFE-T0001, SAFE-T0003
 - Recommended mitigations: SAFE-M-2
 
-**What is happening**
+#### What is happening
 
 A high-risk issue was found.
 
-**Why it matters**
+#### Why it matters
 
 - CIA: C=high, I=medium, A=low
 - Scope: example
 
-**Evidence**
+#### Evidence
 
 | Path | Lines | Notes |
 | --- | --- | --- |
 | `server.py` | 3-3 | Example excerpt |
 
-**server.py:3-3**
+#### Evidence excerpts
+
+##### server.py:3-3
+
 ```text
 do_dangerous()
 ```
 
-**Recommendation**
+#### Recommendation
 
 Fix the issue quickly.
 
@@ -46,27 +49,30 @@ Fix the issue quickly.
 - SAFE-MCP Techniques: SAFE-T0002
 - Recommended mitigations: SAFE-M-1
 
-**What is happening**
+#### What is happening
 
 A low-risk issue was found.
 
-**Why it matters**
+#### Why it matters
 
 - CIA: C=low, I=low, A=low
 - Scope: example
 
-**Evidence**
+#### Evidence
 
 | Path | Lines | Notes |
 | --- | --- | --- |
 | `app.py` | 10-12 | Example excerpt |
 
-**app.py:10-12**
+#### Evidence excerpts
+
+##### app.py:10-12
+
 ```text
 print('hello')
 ```
 
-**Recommendation**
+#### Recommendation
 
 Fix the issue.
 

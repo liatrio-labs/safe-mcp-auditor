@@ -5,13 +5,46 @@ import hashlib
 from safe_mcp_auditor.report.models import Evidence, Finding, Unknown
 
 
+class StableIdError(ValueError):
+    """Raised when a stable ID cannot be computed."""
+
+
+class MissingEvidenceError(StableIdError):
+    def __init__(self) -> None:
+        super().__init__("evidence is required to compute a stable ID")
+
+
+class MissingFindingTitleError(StableIdError):
+    def __init__(self) -> None:
+        super().__init__("title is required to compute a stable finding ID")
+
+
+class MissingFindingTechniquesError(StableIdError):
+    def __init__(self) -> None:
+        super().__init__(
+            "safe_mcp.techniques is required to compute a stable finding ID"
+        )
+
+
+class MissingUnknownQuestionError(StableIdError):
+    def __init__(self) -> None:
+        super().__init__("question is required to compute a stable unknown ID")
+
+
+class MissingUnknownTechniquesError(StableIdError):
+    def __init__(self) -> None:
+        super().__init__(
+            "related_techniques is required to compute a stable unknown ID"
+        )
+
+
 def _escape_hash_field(value: str) -> str:
     return value.replace("\\", "\\\\").replace("|", "\\|")
 
 
 def _primary_evidence(evidence: list[Evidence]) -> Evidence:
     if not evidence:
-        raise ValueError("evidence is required to compute a stable ID")
+        raise MissingEvidenceError
 
     return sorted(evidence, key=lambda e: (e.path, e.line_start))[0]
 
@@ -33,13 +66,11 @@ def finding_hash_input(finding: Finding) -> str:
     """
 
     if not finding.title:
-        raise ValueError("title is required to compute a stable finding ID")
+        raise MissingFindingTitleError
 
     techniques = sorted(finding.safe_mcp.techniques)
     if not techniques:
-        raise ValueError(
-            "safe_mcp.techniques is required to compute a stable finding ID"
-        )
+        raise MissingFindingTechniquesError
 
     primary = _primary_evidence(finding.evidence)
 
@@ -73,13 +104,11 @@ def unknown_hash_input(unknown: Unknown) -> str:
     """
 
     if not unknown.question:
-        raise ValueError("question is required to compute a stable unknown ID")
+        raise MissingUnknownQuestionError
 
     techniques = sorted(unknown.related_techniques)
     if not techniques:
-        raise ValueError(
-            "related_techniques is required to compute a stable unknown ID"
-        )
+        raise MissingUnknownTechniquesError
 
     primary = _primary_evidence(unknown.evidence)
 

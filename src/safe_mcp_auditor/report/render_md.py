@@ -29,7 +29,8 @@ def _render_excerpt_blocks(evidence: list[Evidence]) -> str:
     for item in sorted(evidence, key=lambda e: (e.path, e.line_start, e.line_end)):
         blocks.extend(
             [
-                f"**{item.path}:{item.line_start}-{item.line_end}**",
+                f"##### {item.path}:{item.line_start}-{item.line_end}",
+                "",
                 "```text",
                 item.excerpt,
                 "```",
@@ -86,12 +87,12 @@ def render_report_md(report: Report) -> str:
             )
             lines.append("")
 
-            lines.append("**What is happening**")
+            lines.append("#### What is happening")
             lines.append("")
             lines.append(finding.what_is_happening)
             lines.append("")
 
-            lines.append("**Why it matters**")
+            lines.append("#### Why it matters")
             lines.append("")
             lines.append(
                 "- CIA: "
@@ -102,14 +103,16 @@ def render_report_md(report: Report) -> str:
             lines.append(f"- Scope: {finding.why_it_matters.scope}")
             lines.append("")
 
-            lines.append("**Evidence**")
+            lines.append("#### Evidence")
             lines.append("")
             lines.append(_render_evidence_table(finding.evidence))
+            lines.append("")
+            lines.append("#### Evidence excerpts")
             lines.append("")
             lines.append(_render_excerpt_blocks(finding.evidence))
             lines.append("")
 
-            lines.append("**Recommendation**")
+            lines.append("#### Recommendation")
             lines.append("")
             lines.append(finding.recommendation)
             lines.append("")
@@ -138,9 +141,11 @@ def render_report_md(report: Report) -> str:
                 + (", ".join(unknown.related_techniques) or "(none)")
             )
             lines.append("")
-            lines.append("**Evidence**")
+            lines.append("#### Evidence")
             lines.append("")
             lines.append(_render_evidence_table(unknown.evidence))
+            lines.append("")
+            lines.append("#### Evidence excerpts")
             lines.append("")
             lines.append(_render_excerpt_blocks(unknown.evidence))
             lines.append("")

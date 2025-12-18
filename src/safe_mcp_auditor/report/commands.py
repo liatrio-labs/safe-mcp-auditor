@@ -11,6 +11,24 @@ from safe_mcp_auditor.report.render_md import render_report_md
 
 app = typer.Typer(no_args_is_help=True, add_completion=False)
 
+INPUT_PATH_OPTION = typer.Option(..., "--input", exists=True, readable=True)
+OUTPUT_PATH_OPTION = typer.Option(..., "--output")
+
+
+class InvalidJsonParameterError(typer.BadParameter):
+    def __init__(self, exc: json.JSONDecodeError) -> None:
+        super().__init__(f"Invalid JSON: {exc}")
+
+
+class InvalidReportParameterError(typer.BadParameter):
+    def __init__(self, exc: ValidationError) -> None:
+        super().__init__(str(exc))
+
+
+class ReportOverwriteRefusedError(typer.BadParameter):
+    def __init__(self, output_path: Path) -> None:
+        super().__init__(f"Refusing to overwrite existing report: {output_path}")
+
 
 def _sanitize_filename_component(value: str, *, max_length: int = 80) -> str:
     safe = "".join(c if c.isalnum() or c in "-_." else "_" for c in value)
@@ -28,17 +46,17 @@ def _load_report(input_path: Path) -> Report:
     try:
         data = json.loads(input_path.read_text(encoding="utf-8"))
     except json.JSONDecodeError as exc:
-        raise typer.BadParameter(f"Invalid JSON: {exc}") from exc
+        raise InvalidJsonParameterError(exc) from exc
 
     try:
         return Report.model_validate(data)
     except ValidationError as exc:
-        raise typer.BadParameter(str(exc)) from exc
+        raise InvalidReportParameterError(exc) from exc
 
 
 @app.command()
 def validate(
-    input: Path = typer.Option(..., "--input", exists=True, readable=True),
+    input: Path = INPUT_PATH_OPTION,
 ) -> None:
     """Validate an audit report JSON file against the schema."""
     report = _load_report(input)
@@ -48,8 +66,8 @@ def validate(
 
 @app.command()
 def normalize(
-    input: Path = typer.Option(..., "--input", exists=True, readable=True),
-    output: Path = typer.Option(..., "--output"),
+    input: Path = INPUT_PATH_OPTION,
+    output: Path = OUTPUT_PATH_OPTION,
 ) -> None:
     """Normalize an audit report (stable ordering) and write JSON."""
     report = _load_report(input)
@@ -64,7 +82,7 @@ def normalize(
 
 @app.command()
 def render(
-    input: Path = typer.Option(..., "--input", exists=True, readable=True),
+    input: Path = INPUT_PATH_OPTION,
 ) -> None:
     """Render a deterministic Markdown report under reports/."""
 
@@ -80,7 +98,7 @@ def render(
     output_md = reports_dir / f"{base_name}.md"
 
     if output_json.exists() or output_md.exists():
-        raise typer.BadParameter(f"Refusing to overwrite existing report: {output_md}")
+        raise ReportOverwriteRefusedError(output_md)
 
     output_json.write_text(serialize_report_json(normalized), encoding="utf-8")
     output_md.write_text(render_report_md(normalized), encoding="utf-8")

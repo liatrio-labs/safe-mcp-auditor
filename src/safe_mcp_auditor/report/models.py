@@ -6,8 +6,23 @@ from typing import Any
 from pydantic import BaseModel, Field, model_validator
 
 
+class InvalidEvidenceLineRangeError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("line_end must be >= line_start")
+
+
+class UnknownsRequireNeedsReviewError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("status must be 'needs_review' when unknowns are present")
+
+
+class NeedsReviewRequiresUnknownsError(ValueError):
+    def __init__(self) -> None:
+        super().__init__("status must not be 'needs_review' when unknowns are empty")
+
+
 class Status(StrEnum):
-    PASS = "pass"
+    PASS = "pass"  # noqa: S105
     NEEDS_REVIEW = "needs_review"
     FAIL = "fail"
 
@@ -41,7 +56,7 @@ class Evidence(BaseModel):
     @model_validator(mode="after")
     def _validate_line_range(self) -> "Evidence":
         if self.line_end < self.line_start:
-            raise ValueError("line_end must be >= line_start")
+            raise InvalidEvidenceLineRangeError
         return self
 
 
@@ -181,9 +196,7 @@ class Report(BaseModel):
     @model_validator(mode="after")
     def _enforce_unknown_gate(self) -> "Report":
         if self.unknowns and self.status != Status.NEEDS_REVIEW:
-            raise ValueError("status must be 'needs_review' when unknowns are present")
+            raise UnknownsRequireNeedsReviewError
         if not self.unknowns and self.status == Status.NEEDS_REVIEW:
-            raise ValueError(
-                "status must not be 'needs_review' when unknowns are empty"
-            )
+            raise NeedsReviewRequiresUnknownsError
         return self

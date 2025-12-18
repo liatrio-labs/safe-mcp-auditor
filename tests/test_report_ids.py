@@ -71,7 +71,7 @@ def test_id_generation_errors_without_required_inputs() -> None:
 
 
 def test_hash_inputs_escape_pipe_delimiters_and_backslashes() -> None:
-    finding = Report.model_validate(
+    report = Report.model_validate(
         {
             "schema_version": "1.0.0",
             "status": "needs_review",
@@ -158,8 +158,8 @@ def test_hash_inputs_escape_pipe_delimiters_and_backslashes() -> None:
         }
     )
 
-    finding_input = finding_hash_input(finding.findings[0])
-    unknown_input = unknown_hash_input(finding.unknowns[0])
+    finding_input = finding_hash_input(report.findings[0])
+    unknown_input = unknown_hash_input(report.unknowns[0])
 
     assert (
         finding_input
