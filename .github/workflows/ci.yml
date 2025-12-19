@@ -1,0 +1,79 @@
+name: CI - Tests and Linting
+
+on:
+  push:
+    branches: ["main"]
+    paths-ignore:
+      - "docs/references/**"
+      - "docs/specs/**"
+  pull_request:
+    paths-ignore:
+      - "docs/references/**"
+      - "docs/specs/**"
+  workflow_dispatch:
+
+jobs:
+  lockfile:
+    name: Verify Lockfile
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Verify uv.lock is up-to-date
+        run: uv lock --check
+
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Run tests
+        run: uv run pytest
+
+  lint:
+    name: Run Linting
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set up Node.js (for commitlint/renovate hooks)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Install dependencies
+        run: uv sync --frozen --all-groups
+
+      - name: Run pre-commit hooks
+        run: uv run pre-commit run --all-files

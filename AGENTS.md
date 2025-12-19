@@ -30,6 +30,9 @@ This file applies to the entire repository.
 
 ## Documentation
 
+- Development setup and workflows: `docs/development.md`
+- System architecture overview: `docs/ARCHITECTURE.md`
+- Contribution guidelines: `CONTRIBUTING.md`
 - When editing Markdown files, run:
   - `markdownlint --fix <file>`
   - `markdownlint <file>`

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": "Generic best-practices Renovate configuration",
+  "extends": [
+    "config:best-practices",
+    ":semanticCommits",
+    ":enablePreCommit"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "reviewersFromCodeOwners": true,
+  "packageRules": [
+    {
+      "description": "Automerge non-major updates if CI passes",
+      "matchUpdateTypes": [
+        "pin",
+        "digest"
+      ],
+      "automerge": true
+    },
+    {
+      "description": "Group all non-major dependencies to reduce PR noise",
+      "matchUpdateTypes": [
+        "minor",
+        "patch"
+      ],
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch"
+    }
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "**/bower_components/**",
+    "**/vendor/**",
+    "**/examples/**",
+    "**/__tests__/**",
+    "**/test/**",
+    "**/tests/**"
+  ]
+}

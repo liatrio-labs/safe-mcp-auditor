@@ -1,0 +1,133 @@
+{
+  "schema_version": "1.0.0",
+  "status": "pass",
+  "metadata": {
+    "target_name": "example-target",
+    "input_type": "directory",
+    "input_path": "./example",
+    "input_hash": "deadbeef",
+    "analyzed_at": "2025-01-01T00:00:00Z",
+    "app_version": "0.1.0",
+    "safe_mcp_reference": "SAFE-MCP@dev",
+    "safe_mcp_manifest_path": "knowledge/safe-mcp/manifest.json",
+    "safe_mcp_knowledge_pack_hash": "abc123",
+    "models": {
+      "llm": { "provider": "offline", "model": "stub", "temperature": 0 },
+      "embedder": { "provider": "offline", "model": "stub" }
+    },
+    "run_id": "00000000-0000-0000-0000-000000000000",
+    "scope": {
+      "included_paths": ["."],
+      "excluded_paths": [".venv", "node_modules", "reports"]
+    }
+  },
+  "inventory": {
+    "languages": ["python"],
+    "entrypoints": [],
+    "mcp_transport": "unknown",
+    "auth": { "present": false, "mechanism": null, "evidence": [] },
+    "tools": [
+      {
+        "name": "b-tool",
+        "description": "Second tool",
+        "capabilities": ["filesystem_read"],
+        "schema": null,
+        "evidence": []
+      },
+      {
+        "name": "a-tool",
+        "description": "First tool",
+        "capabilities": [],
+        "schema": null,
+        "evidence": []
+      }
+    ],
+    "resources": [],
+    "storage": [],
+    "network_egress": { "present": false, "allowlist": [], "evidence": [] },
+    "dependencies": { "manifests": [], "lockfiles": [], "evidence": [] }
+  },
+  "findings": [
+    {
+      "id": "F-bbbbbbbbbbbb",
+      "title": "Low severity finding",
+      "severity": "low",
+      "confidence": "high",
+      "safe_mcp": {
+        "techniques": ["SAFE-T0002"],
+        "tactics": ["exfiltration"],
+        "recommended_mitigations": ["SAFE-M-1"],
+        "detection_rule_paths": []
+      },
+      "what_is_happening": "A low-risk issue was found.",
+      "why_it_matters": {
+        "cia": { "confidentiality": "low", "integrity": "low", "availability": "low" },
+        "scope": "example"
+      },
+      "recommendation": "Fix the issue.",
+      "evidence": [
+        {
+          "path": "app.py",
+          "line_start": 10,
+          "line_end": 12,
+          "excerpt": "print('hello')",
+          "notes": "Example excerpt"
+        }
+      ]
+    },
+    {
+      "id": "F-aaaaaaaaaaaa",
+      "title": "High severity finding",
+      "severity": "high",
+      "confidence": "high",
+      "safe_mcp": {
+        "techniques": ["SAFE-T0001", "SAFE-T0003"],
+        "tactics": ["initial_access"],
+        "recommended_mitigations": ["SAFE-M-2"],
+        "detection_rule_paths": []
+      },
+      "what_is_happening": "A high-risk issue was found.",
+      "why_it_matters": {
+        "cia": { "confidentiality": "high", "integrity": "medium", "availability": "low" },
+        "scope": "example"
+      },
+      "recommendation": "Fix the issue quickly.",
+      "evidence": [
+        {
+          "path": "server.py",
+          "line_start": 3,
+          "line_end": 3,
+          "excerpt": "do_dangerous()",
+          "notes": "Example excerpt"
+        }
+      ]
+    }
+  ],
+  "unknowns": [],
+  "coverage": [
+    {
+      "technique_id": "SAFE-T0002",
+      "tactic": "exfiltration",
+      "safe_mcp_severity": "low",
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": ["F-bbbbbbbbbbbb"]
+    },
+    {
+      "technique_id": "SAFE-T0003",
+      "tactic": "initial_access",
+      "safe_mcp_severity": "high",
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": ["F-aaaaaaaaaaaa"]
+    },
+    {
+      "technique_id": "SAFE-T0001",
+      "tactic": "initial_access",
+      "safe_mcp_severity": "high",
+      "applicability": "applicable",
+      "confidence": "high",
+      "linked_finding_ids": ["F-aaaaaaaaaaaa"]
+    }
+  ]
+}
